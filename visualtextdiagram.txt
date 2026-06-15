@@ -1,0 +1,50 @@
+
+
+[ USER QUERY ] (e.g., "White car seen at night")
+       │
+       ▼
+┌────────────────────────────────────────────────────────┐
+│ 1. PLANNER NODE (query_planner_node)                   │
+│    • Receives raw human text query.                    │
+│    • Deconstructs it into semantic visual features.    │
+│    • Generates variations & descriptive sub-queries.    │
+└───────────────────────┬────────────────────────────────┘
+                        │
+                        │ (State: Passes list of sub-queries)
+                        ▼
+┌────────────────────────────────────────────────────────┐
+│ 2. SEARCHER NODE (vector_search_node)                  │
+│    • Iterates through planned text sub-queries.        │
+│    • Converts text queries into CLIP visual vectors.   │
+│    • Queries ChromaDB for lowest vector distances.     │
+│    • Extracts top 3 candidate frames + metadata.       │
+└───────────────────────┬────────────────────────────────┘
+                        │
+                        │ (State: Appends candidate frames)
+                        ▼
+┌────────────────────────────────────────────────────────┐
+│ 3. CRITIC NODE (critic_evaluator_node)                 │
+│    • Inspects vector match distances (confidence).     │
+│    • Compares values against safety/error threshold.   │
+│    • Marks 'evaluation_passed' as True or False.       │
+└───────────────────────┬────────────────────────────────
+                        │
+                        ▼
+         ⚡ CONDITIONAL ROUTER EDGE ⚡
+                        │
+         Is evaluation_passed == True?
+         /                             \
+     [ YES ]                         [ NO ]
+       /                                 \
+      ▼                                   ▼
+┌──────────────┐                 ┌─────────────────┐
+│  TERMINATE   │                 │   RE-LOOP TO    │
+│  (END NODE)  │                 │  PLANNER NODE   │
+│              │                 │                 │
+│ Returns final│                 │ Relaxes rules / │
+│ frame logs & │                 │ generates new   │
+│ timestamps.  │                 │ descriptions.   │
+└──────────────┘                 └─────────────────┘
+
+Would you like to add an LLM processor into the Planner Node using an API key or local model so it can automatically generate advanced synonyms, or should we connect a gradio-based front-end interface to view the actual frames matching this workflow?
+
